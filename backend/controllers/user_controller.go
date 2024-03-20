@@ -1,35 +1,46 @@
 package controllers
 
 import (
-	"encoding/json"
 	"net/http"
 
-	"github.com/K1ose/bdsms/services"
+	"github.com/K1ose/bdsms/backend/services"
+	"github.com/gin-gonic/gin"
 )
 
 type UserController struct {
 	userService *services.UserService
 }
 
+// 假设 YourUserServiceType 是定义在 services 包中的类型，且它有一个 RegisterUser 方法
+// 请根据实际情况调整 YourUserServiceType 和 RegisterUser 方法的具体实现
+
 func NewUserController(userService *services.UserService) *UserController {
-	return &UserController{userService}
+	return &UserController{
+		userService: userService,
+	}
 }
 
-func (c *UserController) Register(w http.ResponseWriter, r *http.Request) {
+func (c *UserController) Register(ctx *gin.Context) {
 	var input struct {
-		Username string `json:"username"`
-		Email    string `json:"email"`
-		Password string `json:"password"` // 注意：实际应用中应先进行加密处理
+		Username  string `json:"username"`
+		Email     string `json:"email"`
+		Password  string `json:"password"` // 注意：实际应用中应先进行加密处理
+		CreatedAt string `json:"created_at"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+
+	// 使用 ctx.ShouldBindJSON 来解析请求体中的 JSON 数据到 input
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	// 密码加密省略，实际应用中需进行密码加密
+
+	// 调用 userService 的 RegisterUser 方法来注册用户
+	// 密码加密操作应该在 userService.RegisterUser 方法内部完成
 	if err := c.userService.RegisterUser(input.Username, input.Email, input.Password); err != nil {
-		http.Error(w, "Failed to register user", http.StatusInternalServerError)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to register user"})
 		return
 	}
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("User registered successfully"))
+
+	// 发送成功响应
+	ctx.JSON(http.StatusOK, gin.H{"message": "User registered successfully"})
 }
