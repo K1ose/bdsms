@@ -1,3 +1,4 @@
+<!-- src/views/Register.vue -->
 <template>
     <div>
       <h2>注册</h2>
@@ -24,17 +25,19 @@
     methods: {
       async register() {
         try {
-          await axios.post('http://localhost:8080/register', {
+          const response = await axios.post('http://localhost:8080/register', {
             username: this.username,
             email: this.email,
             password: this.password,
           });
           alert('注册成功！');
-          // 可以重定向到登录页面或首页
+          // 重定向到登录页或首页
+          this.$router.push('/login'); // 假设你有一个登录页面
         } catch (error) {
-          alert('注册失败：' + error.response.data);
+          alert('注册失败：' + error.response.data.error);
         }
       },
     },
-  }
+  };
+  </script>
   
